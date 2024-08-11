@@ -32,7 +32,7 @@ const GET_RESOURCE_CONTENTS = gql`
   }
 `;
 
-export const SiteStatus = () => {
+const SiteStatus = () => {
   // Set the url of the current page
   const [currentUrl, setCurrentUrl] = useState('');
   const [scamCount, setScamCount] = useState(0);
@@ -70,3 +70,5 @@ export const SiteStatus = () => {
     </div>
   );
 };
+
+export default SiteStatus;
