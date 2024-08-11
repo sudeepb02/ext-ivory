@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-// import ResourceContents from './ResourceContent';
-
 import { gql, useQuery } from '@apollo/client';
 
 interface ResourceContent {
@@ -32,19 +30,13 @@ const GET_RESOURCE_CONTENTS = gql`
   }
 `;
 
-export const SiteStatus = () => {
-  // Set the url of the current page
+const SiteStatus = () => {
   const [currentUrl, setCurrentUrl] = useState('');
   const [scamCount, setScamCount] = useState(0);
 
   const { loading, error, data } = useQuery<GraphQLResponse>(
     GET_RESOURCE_CONTENTS
   );
-
-  const addScamCount = (count: number) => {
-    setScamCount(scamCount + count);
-    return '';
-  };
 
   useEffect(() => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -54,13 +46,23 @@ export const SiteStatus = () => {
     });
   }, []);
 
+  useEffect(() => {
+    if (data) {
+      const totalScamCount = data.resourceContents.reduce(
+        (acc, item) => acc + Number(item.isScamCount),
+        0
+      );
+      setScamCount(totalScamCount);
+    }
+  }, [data]);
+
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
 
   return (
     <div>
       {data?.resourceContents.map((item) => (
-        <div key={item.id}>{addScamCount(Number(item.isScamCount))}</div>
+        <div key={item.id}>{item.name}</div>
       ))}
 
       <h3>
@@ -70,3 +72,5 @@ export const SiteStatus = () => {
     </div>
   );
 };
+
+export default SiteStatus;
