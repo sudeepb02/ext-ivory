@@ -58,7 +58,6 @@ const Attestations = () => {
 
   return (
     <div>
-      <h2>Ethereum Attestation Service</h2>
       <div>
         <button onClick={fetchAttestation}>Button 1</button>
         <h3>Schema Data</h3>
