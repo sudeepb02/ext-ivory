@@ -26,7 +26,7 @@ const PopupHome = () => {
       <div>
         {showStatus ? <SiteStatus /> : <SubmitReport />}
         <button onClick={toggleDisplay}>
-          {showStatus ? 'Submit Report' : 'Back to Status'}
+          {showStatus ? 'Report Site' : 'Back to Status'}
         </button>
       </div>
     </ApolloProvider>
