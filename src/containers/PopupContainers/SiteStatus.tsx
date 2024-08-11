@@ -16,18 +16,20 @@ interface GraphQLResponse {
 }
 
 // Define the GraphQL query
-const GET_RESOURCE_CONTENTS = gql`
-  {
-    resourceContents {
-      id
-      name
-      content
-      contentHash
-      type
-      isScamCount
-      notScamCount
-    }
+const GET_RESOURCE_CONTENTS = (siteUrl: string) => gql`
+{
+  resourceContents(where: {
+    content_contains: "${siteUrl}"
+  }) {
+    id
+    name
+    content
+    contentHash
+    type
+    isScamCount
+    notScamCount
   }
+}
 `;
 
 const SiteStatus = () => {
@@ -35,7 +37,7 @@ const SiteStatus = () => {
   const [scamCount, setScamCount] = useState(0);
 
   const { loading, error, data } = useQuery<GraphQLResponse>(
-    GET_RESOURCE_CONTENTS
+    GET_RESOURCE_CONTENTS(currentUrl)
   );
 
   useEffect(() => {
@@ -64,11 +66,10 @@ const SiteStatus = () => {
       {data?.resourceContents.map((item) => (
         <div key={item.id}>{item.name}</div>
       ))}
-
-      <h3>
-        Current URL: <p>{currentUrl}</p>
+      <p>Current URL: {currentUrl}</p>
+      <h4>
         Scam Reports: <b>{scamCount}</b>
-      </h3>
+      </h4>
     </div>
   );
 };
