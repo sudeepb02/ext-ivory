@@ -4,7 +4,6 @@ import { EAS, SchemaEncoder } from '@ethereum-attestation-service/eas-sdk';
 import { ethers } from 'ethers';
 
 const EAS_CONTRACT_ADDRESS = '0x4200000000000000000000000000000000000021'; // Base Sepolia
-const SCHEMA_REGISTRY_ADDRESS = '0x4200000000000000000000000000000000000020'; // Base Sepolia
 const RPC_URL =
   'https://base-sepolia.g.alchemy.com/v2/fsnUOifxtseIxdhw9Q5-OZk52F2hlSZY';
 
@@ -28,7 +27,6 @@ export const SubmitReport = () => {
   const [wallet, setWallet] = useState<ethers.Wallet | null>(null);
 
   const getEasContract = (): EAS => {
-    console.log('Creating eas contract instance...');
     const eas = new EAS(EAS_CONTRACT_ADDRESS);
     if (wallet) {
       eas.connect(wallet);
@@ -69,24 +67,28 @@ export const SubmitReport = () => {
   };
 
   const createResourceAttestation = async (name: string, content: string) => {
-    console.log('Creating resource attestation...');
-    const easContract = getEasContract();
+    try {
+      const easContract = getEasContract();
 
-    const encodedData = encodeResourceData(name, content);
-    const transaction = await easContract.attest({
-      schema: RESOURCE_CONTENT_SCHEMA,
-      data: {
-        recipient: '0xFD50b031E778fAb33DfD2Fc3Ca66a1EeF0652165',
-        revocable: true,
-        data: encodedData,
-      },
-    });
+      const encodedData = encodeResourceData(name, content);
+      const transaction = await easContract.attest({
+        schema: RESOURCE_CONTENT_SCHEMA,
+        data: {
+          recipient: '0xFD50b031E778fAb33DfD2Fc3Ca66a1EeF0652165',
+          revocable: true,
+          data: encodedData,
+        },
+      });
 
-    const receipt = await transaction.wait();
-    console.log('New attestation UID:', receipt);
-    console.log('Transaction receipt:', receipt);
+      const receipt = await transaction.wait();
+      console.log('New attestation UID:', receipt);
+      console.log('Transaction receipt:', receipt);
 
-    return receipt;
+      return receipt.uid;
+    } catch (error) {
+      console.error('Error creating resource attestation:', error);
+      return null;
+    }
   };
 
   const createVoteAttestation = async (
@@ -94,27 +96,30 @@ export const SubmitReport = () => {
     reason: string,
     info: string
   ) => {
-    console.log('Creating vote attestation...');
-    const easContract = getEasContract();
-    const encodedData = encodeVoteData(resourceId, reason, info);
-    const transaction = await easContract.attest({
-      schema: VOTE_CONTENT_SCHEMA,
-      data: {
-        recipient: '0xFD50b031E778fAb33DfD2Fc3Ca66a1EeF0652165',
-        revocable: true,
-        data: encodedData,
-      },
-    });
+    try {
+      const easContract = getEasContract();
+      const encodedData = encodeVoteData(resourceId, reason, info);
+      const transaction = await easContract.attest({
+        schema: VOTE_CONTENT_SCHEMA,
+        data: {
+          recipient: '0xFD50b031E778fAb33DfD2Fc3Ca66a1EeF0652165',
+          revocable: true,
+          data: encodedData,
+        },
+      });
 
-    const receipt = await transaction.wait();
-    console.log('New attestation UID:', receipt);
-    console.log('Transaction receipt:', receipt);
+      const receipt = await transaction.wait();
+      console.log('New attestation UID:', receipt);
+      console.log('Transaction receipt:', receipt);
 
-    return receipt;
+      return receipt;
+    } catch (error) {
+      console.error('Error creating vote attestation:', error);
+      return null;
+    }
   };
 
   const setUp = async () => {
-    console.log('Setting up....');
     const provider = new ethers.JsonRpcProvider(RPC_URL);
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY || '', provider);
     setWallet(wallet);
@@ -141,15 +146,27 @@ export const SubmitReport = () => {
   };
 
   const handleSubmit = async (e: any) => {
-    console.log('Submitting Form');
+    e.preventDefault();
+    console.log('Submit button clicked');
+    console.log('Form Data:', formData);
+
     const resourceUid = await createResourceAttestation(pageTitle, currentUrl);
+    if (!resourceUid) {
+      console.error('Failed to create resource attestation');
+      return;
+    }
+
     const voteUid = await createVoteAttestation(
       resourceUid,
       formData.reason,
       formData.info
     );
+    if (!voteUid) {
+      console.error('Failed to create vote attestation');
+      return;
+    }
 
-    console.log('Form submitted');
+    console.log('Form submitted successfully');
     console.log('Resource ID of attestation:', resourceUid);
     console.log('Vote ID of attestation:', voteUid);
   };
@@ -175,7 +192,7 @@ export const SubmitReport = () => {
             name="info"
             value={formData.info}
             onChange={handleChange}
-            placeholder="Any other additional info "
+            placeholder="Any other additional info"
           />
         </label>
       </div>
